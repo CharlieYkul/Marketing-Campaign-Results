@@ -29,19 +29,19 @@ o	gregorian_date: Date in Gregorian calendar (object)
 o	month_name: Month label (object)
 
 # Insights:
-•  Campaign Month Total Deposits:
-•	During the campaign (Month 3), the total deposits amounted to $39,675,057.10.
-•  New Clients During Campaign:
-•	A total of 43,806 new clients made their first deposits during the campaign period.
-•  Pre- and Post-Campaign Totals:
-•	The total deposits for Months 1, 2, 4, and 5 combined are $135,768,257.09.
-•  Age Group Distribution:
-•	Clients are distributed as follows:
+•  Campaign Month Total Deposits: During the campaign (Month 3), the total deposits amounted to $39,675,057.10.
+
+•  New Clients During Campaign: A total of 43,806 new clients made their first deposits during the campaign period.
+
+•  Pre- and Post-Campaign Totals: The total deposits for Months 1, 2, 4, and 5 combined are $135,768,257.09.
+
+•  Age Group Distribution:Clients are distributed as follows:
 o	<30: 1,650 clients
 o	30-50: 19,201 clients
 o	51-70: 19,606 clients
 o	70+: 5,890 clients
-•	Most clients fall in the 30-70 age range.
+Most clients fall in the 30-70 age range.
+
 •  Postponed Campaign Simulation:
 •	The calculation for deposits in "Month 6" is unavailable due to missing data in the calendar dataset.
 
