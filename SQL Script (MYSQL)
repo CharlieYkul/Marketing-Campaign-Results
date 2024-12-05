@@ -1,0 +1,137 @@
+
+-- Create the database and tables
+CREATE DATABASE IF NOT EXISTS Free;
+USE Free;
+
+-- Create client_data table
+CREATE TABLE IF NOT EXISTS client_data (
+    client_id VARCHAR(30) PRIMARY KEY,
+    client_geographical_region VARCHAR(25),
+    client_residence_status VARCHAR(10),
+    client_age INT
+);
+
+-- Enable local infile for bulk loading
+SET GLOBAL local_infile = 1;
+
+-- Load data into client_data table
+LOAD DATA LOCAL INFILE 'C:/Users/cagri/Desktop/Freedom Debt Relief/client_data.csv'
+INTO TABLE client_data
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(client_id, client_geographical_region, client_residence_status, client_age);
+
+-- Create deposit_data table
+CREATE TABLE IF NOT EXISTS deposit_data (
+    deposit_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id VARCHAR(30),
+    deposit_type VARCHAR(25),
+    deposit_amount DECIMAL(10, 2),
+    deposit_cadence VARCHAR(10),
+    deposit_date DATE,
+    FOREIGN KEY (client_id) REFERENCES client_data(client_id)
+);
+
+-- Load data into deposit_data table
+LOAD DATA LOCAL INFILE 'C:/Users/cagri/Desktop/Freedom Debt Relief/deposit_data.csv'
+INTO TABLE deposit_data
+FIELDS TERMINATED BY ','  
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(client_id, deposit_type, deposit_amount, deposit_cadence, deposit_date);
+
+-- Create calendar_data table
+CREATE TABLE IF NOT EXISTS calendar_data (
+    gregorian_date DATE PRIMARY KEY,
+    month_name VARCHAR(25)
+);
+
+-- Load data into calendar_data table
+LOAD DATA LOCAL INFILE 'C:/Users/cagri/Desktop/Freedom Debt Relief/calendar_data.csv'
+INTO TABLE calendar_data
+FIELDS TERMINATED BY ','  
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(gregorian_date, month_name);
+
+-- Data Exploration Queries
+-- Verify data integrity
+SELECT COUNT(*) AS total_clients FROM client_data;
+SELECT COUNT(*) AS total_deposits FROM deposit_data;
+SELECT COUNT(*) AS total_calendar_rows FROM calendar_data;
+
+-- Check for unmatched client_ids in deposit_data
+SELECT DISTINCT deposit_data.client_id 
+FROM deposit_data 
+LEFT JOIN client_data ON deposit_data.client_id = client_data.client_id
+WHERE client_data.client_id IS NULL;
+
+-- Summary statistics: deposits by month
+SELECT 
+    c.month_name, 
+    SUM(d.deposit_amount) AS total_deposit_amount, 
+    COUNT(d.deposit_id) AS total_deposit_count
+FROM deposit_data d
+LEFT JOIN calendar_data c ON d.deposit_date = c.gregorian_date
+GROUP BY c.month_name
+ORDER BY c.month_name;
+
+-- Deposits by type
+SELECT 
+    deposit_type, 
+    SUM(deposit_amount) AS total_deposit_amount, 
+    COUNT(deposit_id) AS total_deposit_count
+FROM deposit_data
+GROUP BY deposit_type
+ORDER BY total_deposit_amount DESC;
+
+-- Age group distribution
+SELECT 
+    CASE 
+        WHEN client_age < 30 THEN '<30'
+        WHEN client_age BETWEEN 30 AND 50 THEN '30-50'
+        WHEN client_age BETWEEN 51 AND 70 THEN '51-70'
+        ELSE '70+'
+    END AS age_group,
+    COUNT(*) AS client_count
+FROM client_data
+GROUP BY age_group
+ORDER BY client_count DESC;
+
+-- Campaign Analysis
+-- Success of campaign during Month 3
+SELECT 
+    c.month_name, 
+    SUM(d.deposit_amount) AS total_deposit_amount
+FROM deposit_data d
+LEFT JOIN calendar_data c ON d.deposit_date = c.gregorian_date
+WHERE c.month_name = 'Month 3';
+
+-- Compare campaign performance to pre- and post-campaign months
+SELECT 
+    c.month_name, 
+    SUM(d.deposit_amount) AS total_deposit_amount
+FROM deposit_data d
+LEFT JOIN calendar_data c ON d.deposit_date = c.gregorian_date
+WHERE c.month_name IN ('Month 1', 'Month 2', 'Month 4', 'Month 5')
+GROUP BY c.month_name
+ORDER BY c.month_name;
+
+-- New clients acquired during campaign
+SELECT COUNT(DISTINCT d.client_id) AS new_clients_during_campaign
+FROM deposit_data d
+LEFT JOIN calendar_data c ON d.deposit_date = c.gregorian_date
+WHERE c.month_name = 'Month 3';
+
+-- Postponed Campaign Simulation (Add 3 months to deposits from Month 3)
+UPDATE deposit_data
+SET deposit_date = DATE_ADD(deposit_date, INTERVAL 3 MONTH)
+WHERE deposit_date IN (
+    SELECT gregorian_date 
+    FROM calendar_data
+    WHERE month_name = 'Month 3'
+);
